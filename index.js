@@ -23,6 +23,20 @@ const buildServer = () => __awaiter(void 0, void 0, void 0, function* () {
         resolvers: resolvers_1.resolvers,
         graphiql: true,
     });
+    server.get("/search", (request, reply) => __awaiter(void 0, void 0, void 0, function* () {
+        const { postalCode, store } = request.query;
+        if (!postalCode || !store) {
+            reply.code(400).send({ error: "Postal code and store are required" });
+            return;
+        }
+        try {
+            const result = yield resolvers_1.resolvers.Query.items(null, { postalCode, store });
+            reply.send(result);
+        }
+        catch (error) {
+            reply.code(500).send({ error: "Failed to process request" });
+        }
+    }));
     return server;
 });
 const start = () => __awaiter(void 0, void 0, void 0, function* () {

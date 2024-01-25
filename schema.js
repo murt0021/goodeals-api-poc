@@ -8,6 +8,7 @@ exports.schema = (0, graphql_1.buildSchema)(`
     _L2: String
     name: String
     id: String
+    merchant_id: String
     merchant_name: String
     valid_from: String
     valid_to: String
