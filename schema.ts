@@ -5,6 +5,7 @@ export const schema = buildSchema(`
     _L1: String
     _L2: String
     name: String
+    id: String
     merchant_name: String
     valid_from: String
     valid_to: String
