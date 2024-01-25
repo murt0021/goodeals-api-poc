@@ -1,0 +1,27 @@
+{
+  "name": "api-poc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.11.6",
+    "@types/node-fetch": "^2.6.11",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@fastify/swagger": "^8.14.0",
+    "axios": "^1.6.7",
+    "fastify": "^4.25.2",
+    "fastify-gql": "^0.2.1",
+    "fastify-static": "^4.7.0",
+    "graphql": "^16.8.1",
+    "mercurius": "^13.3.3",
+    "node-fetch": "^3.3.2"
+  }
+}
