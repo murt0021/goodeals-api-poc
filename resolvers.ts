@@ -1,5 +1,6 @@
 import axios from "axios";
-import pool from "./db"; // Import the database connection
+import pool from "./db";
+import format from "pg-format";
 
 interface ApiResponse {
   items: Array<{
@@ -18,22 +19,32 @@ interface ApiResponse {
   }>;
 }
 
+const storeToMerchantIdMap: { [key: string]: string } = {
+  loblaws: "2018",
+  metro: "2269",
+  walmart: "234",
+};
+
 export const resolvers = {
   Query: {
     items: async (_: any, args: { postalCode: string; store: string }) => {
-      const currentDate = new Date();
+      const currentDate = new Date().toISOString();
+      const merchantId = storeToMerchantIdMap[args.store.toLowerCase()];
+
+      if (!merchantId) {
+        throw new Error("Invalid store name");
+      }
+
       try {
-        // Check the database for valid items first
         const dbResponse = await pool.query(
           "SELECT * FROM historical_prices WHERE merchant_id = $1 AND valid_from <= $2 AND valid_to >= $3",
-          [args.store, currentDate, currentDate]
+          [merchantId, currentDate, currentDate]
         );
 
         if (dbResponse.rows.length > 0) {
-          // Return valid items from the database
           return dbResponse.rows;
+
         } else {
-          // Fetch from the third-party API if no valid items in the database
           const apiResponse = await axios.get(
             `https://backflipp.wishabi.com/flipp/items/search?locale=en-ca&postal_code=${args.postalCode}&q=${args.store}`
           );
@@ -45,21 +56,22 @@ export const resolvers = {
               item.merchant_id != null
           );
 
-          // Insert new items into the database
-          for (const item of filteredItems) {
-            const validFrom = new Date(item.valid_from);
-            const validTo = new Date(item.valid_to);
-            await pool.query(
-              "INSERT INTO historical_prices (item_id, item_name, merchant_id, current_price, valid_from, valid_to) VALUES ($1, $2, $3, $4, $5, $6)",
-              [
-                item.id,
-                item.name,
-                item.merchant_id,
-                item.current_price,
-                validFrom,
-                validTo,
-              ]
+          const insertData = filteredItems.map((item) => [
+            item.id,
+            item.name,
+            merchantId,
+            item.merchant_name,
+            item.current_price,
+            new Date(item.valid_from),
+            new Date(item.valid_to),
+          ]);
+
+          if (insertData.length > 0) {
+            const insertQuery = format(
+              "INSERT INTO historical_prices (item_id, name, merchant_id, merchant_name, current_price, valid_from, valid_to) VALUES %L",
+              insertData
             );
+            await pool.query(insertQuery);
           }
 
           return filteredItems;
